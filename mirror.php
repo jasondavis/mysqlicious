@@ -1,8 +1,7 @@
 #!/usr/bin/php -q
 <?php
 // mirror.php MySQLicious implementation
-// Mirrors del.icio.us bookmarks.
-// v1.01 - 8/6/2006
+// v1.0 - 3/23/2005
 
 // MySQL configuration
 $MySQL_Host		= "localhost";	// address of your MySQL server
@@ -29,9 +28,6 @@ require $currentDir."MySQLicious.php";
 // initialize MySQLicious
 $delicious = new MySQLicious($MySQL_Host, $MySQL_Database, $MySQL_Username, $MySQL_Password);
 
-// un-comment the following line to turn on XML logging
-// this should only be necessary as a debugging measure
-//$delicious->logXml = true;
 
 // perform the mirroring
 $delicious->mirror($delicious_Username, $delicious_Password, $MySQL_Table, $delicious_TagFilter);
