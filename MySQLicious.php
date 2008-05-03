@@ -1,39 +1,8 @@
 <?php
 
-// MySQLicious 1.2
+// MySQLicious 1.1
 // A del.icio.us to MySQL mirroring tool.
-//
-// For documentation, see http://nanovivid.com/projects/mysqlicious
-//
-//
-// Copyright (c) 2005-2006, Adam Nolley (nanovivid)
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-// 
-//  * Redistributions of source code must retain the above copyright notice,
-//    this list of conditions and the following disclaimer.
-// 
-//  * Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-// 
-//  * Neither the name Adam Nolley (nanovivid), nor the names of its
-//    contributors may be used to endorse or promote products derived from
-//    this software without specific prior written permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
+// Copyright 2005 Adam Nolley - http://nanovivid.com
 
 define("MYSQLICIOUS_OUTPUT_HTML", "html");
 define("MYSQLICIOUS_OUTPUT_CMD", "cmd");
@@ -63,12 +32,6 @@ class MySQLicious {
 	
 	// can be used to force an update regardless of what del.icio.us says
 	var $forceUpdate;
-	
-	// should we escape HTML characters if needed?
-	var $outputMode;
-	
-	// XML returned by del.icio.us should be included in the output
-	var $logXml;
 	
 	// http://del.icio.us/api ... or whatever it needs to be
 	var $deliciousAPIPrefix;
@@ -100,21 +63,16 @@ class MySQLicious {
 		$this->out = "";
 		
 		// set the del.icio.us API
-		$this->setAPIAddress("https://api.del.icio.us/v1/");
+		$this->setAPIAddress("http://del.icio.us/api/");
 		
 		// data table for storing update dates
 		$this->MySQLiciousDataTable = "MySQLicious";
 		
-		// by default, we don't want to force an update or include XML in output
+		// by default, we don't want to force an update
 		$this->forceUpdate = false;
-		$this->logXml = false;
 		
-		// if $_ENV['SHELL'] exists, we're probably in command line mode
-		if (array_key_exists('SHELL', $_ENV)) {
-			$this->setOutputMode(MYSQLICIOUS_OUTPUT_CMD);
-		} else {
-			$this->setOutputMode(MYSQLICIOUS_OUTPUT_HTML);
-		}
+		// output default is \n for newlines
+		$this->setOutputMode(MYSQLICIOUS_OUTPUT_CMD);
 		
 		// connect to the MySQL server and select the database
 		$this->mysqlLink = mysql_connect($mysqlHost, $mysqlUsername, $msyqlPassword) or die("Could not connect to MySQL server.");
@@ -145,7 +103,7 @@ class MySQLicious {
 		
 		// let's do some updating!
 		if ((($this->remoteUpdate > $localUpdate) or !$localUpdate or $this->forceUpdate) and !$this->isError) {
-			$this->out .= "Update may be needed. Checking now." . $this->newline . $this->newline;
+			$this->out .= "Update may be needed. Checking now." . $this->$newline . $this->$newline;
 			
 			// gather all posts from the MySQL mirror for comparison to the del.icio.us ones
 			$sql = "SELECT * FROM `".$this->mysqlTable."`";
@@ -182,13 +140,13 @@ class MySQLicious {
 			// display stats if there are any
 			if (($this->mirrorStats['numInserted'] + $this->mirrorStats['numUpdated'] + $this->mirrorStats['numDeleted']) > 0) {
 				if ($this->mirrorStats['numInserted'] > 0) {
-					$this->out .= $this->newline . $this->mirrorStats['numInserted'] . " inserted." . $this->newline;
+					$this->out .= $this->$newline . $this->mirrorStats['numInserted'] . " inserted." . $this->$newline;
 				}
 				if ($this->mirrorStats['numUpdated'] > 0) {
-					$this->out .= $this->newline . $this->mirrorStats['numUpdated'] . " updated." . $this->newline;
+					$this->out .= $this->$newline . $this->mirrorStats['numUpdated'] . " updated." . $this->$newline;
 				}
 				if ($this->mirrorStats['numDeleted'] > 0) {
-					$this->out .= $this->newline . $this->mirrorStats['numDeleted'] . " deleted." . $this->newline;
+					$this->out .= $this->$newline . $this->mirrorStats['numDeleted'] . " deleted." . $this->$newline;
 				}
 			} else {
 				$this->out .= "No items inserted or updated.";
@@ -199,7 +157,7 @@ class MySQLicious {
 		} else {
 			$this->out .= "No update needed.";
 		}
-		$this->out .= $this->newline . $this->newline;
+		$this->out .= $this->$newline . $this->$newline;
 		
 		if ($this->outputMode != MYSQLICIOUS_OUTPUT_NONE) {
 			echo $this->out;
@@ -258,7 +216,7 @@ class MySQLicious {
 	//  $useHTML		true means endlines will be <br /> false means \n
 	function setOutputMode($mode) {
 		$this->outputMode = $mode;
-		$this->newline = ($mode == MYSQLICIOUS_OUTPUT_HTML) ? "<br />" : "\n";
+		$this->$newline = ($mode == MYSQLICIOUS_OUTPUT_HTML) ? "<br />" : "\n";
 	}
 	
 	
@@ -291,29 +249,19 @@ class MySQLicious {
 		// parse the del.icio.us content returned from the API
 		$theXML = $this->deliciousDoAPI($apiCall, $user, $pass);
 		if ($theXML['success']) {
-			
-			// include XML returned by del.icio.us if we need to
-			if ($this->logXml) {
-				$this->out .= $this->newline;
-				$this->out .= ($this->outputMode == MYSQLICIOUS_OUTPUT_HTML) ? 
-								str_replace(array("<", ">"), array("&lt;", "&gt;"), $theXML['page']) : 
-								$theXML['page'];
-				$this->out .= $this->newline . $this->newline;
-			}
-			
 			if (!xml_parse($p, $theXML['page'], true)) {
-				$this->out .= "XML Parse Error: " . xml_error_string(xml_get_error_code($p)) . " at line " . xml_get_current_line_number($p) . $this->newline;
+				$this->out .= "XML Parse Error: " . xml_error_string(xml_get_error_code($p)) . " at line " . xml_get_current_line_number($p) . $this->$newline;
 			}
 		} else {
 			
 			$this->isError = true;
 			
-			$text = preg_replace('/</', ' <', $theXML['page']);
-			$text = preg_replace('/>/', '> ', $text);
+			$text = preg_replace('/</',' <',$theXML['page']);
+			$text = preg_replace('/>/','> ',$text);
 			$text = html_entity_decode(strip_tags($text));
-			$text = preg_replace('/[\n\r]/', $this->newline, $text);
+			$text = preg_replace('/[\n\r]/',$this->$newline,$text);
 			
-			$this->errorText  = "del.icio.us API Error:" . $this->newline . $this->newline;
+			$this->errorText  = "del.icio.us API Error:" . $this->$newline . $this->$newline;
 			$this->errorText .= trim($text);
 		}
 		
@@ -360,7 +308,7 @@ class MySQLicious {
 			if ($HTTPCode == 503) {
 				$sleepytime = $this->deliciousThrottleBackoffMultiplier * 5;
 				
-				$this->out .= "WARNING: You are being throttled by the del.icio.us server. Pausing for $sleepytime seconds." . $this->newline;
+				$this->out .= "WARNING: You are being throttled by the del.icio.us server. Pausing for $sleepytime seconds." . $this->$newline;
 				sleep($sleepytime);
 				
 				$this->deliciousThrottleBackoffMultiplier = pow($this->deliciousThrottleBackoffMultiplier, 2);
@@ -510,12 +458,12 @@ class MySQLicious {
 	//	&$incrementThis		variable to increment on a good result
 	function mysqlDoQuery($sql, $textIfGood, &$incrementThis) {
 		if (mysql_query($sql, $this->mysqlLink)) {
-			$this->out .= $textIfGood . $this->newline;
+			$this->out .= $textIfGood . $this->$newline;
 			$incrementThis ++;
 		} else {
 			$this->out .= $this->newline;
 			$this->out .= mysql_error($this->mysqlLink);
-			$this->out .= $this->newline . $sql . $this->newline . $this->newline;
+			$this->out .= $this->$newline . $sql . $this->$newline . $this->$newline;
 		}
 	}
 	
